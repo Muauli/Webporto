@@ -353,7 +353,7 @@ export default function Contact() {
                   Location
                 </p>
                 <p style={{ fontSize: "14px", color: "#aaa" }}>
-                  Jakarta, Indonesia
+                  Depok, Indonesia
                 </p>
               </div>
             </div>

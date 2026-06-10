@@ -38,18 +38,18 @@ const projects = [
       "End-to-end automation of 6 SAP FI/CO financial reporting workflows using Python, n8n, and Power Automate. Includes an internal web interface for finance personnel and a RAG chatbot backed by 40 custom QA pairs for recruitment FAQ automation.",
     tech: ["Python", "n8n", "Power Automate", "Power BI", "RAG"],
     accent: "#fbbf24",
-    link: "https://github.com/Muauli",
+    link: "https://github.com/Muauli/Financial_RPA",
     visual: "rpa",
   },
   {
     number: "04",
-    title: "ITSM CRM Backend",
-    //subtitle: "Backend · PT Finnet Indonesia",
+    title: "FAQ Chatbot using N8N",
+    subtitle: "For recruitment purpose chatbot",
     description:
       "Backend features for an internal ITSM CRM serving 100+ users. Implemented search and filter APIs alongside server-side pagination to reduce heavy response payloads and improve overall data retrieval performance at scale.",
     tech: ["REST API", "Django", "PostgreSQL", "Pagination"],
     accent: "#a78bfa",
-    link: "https://github.com/Muauli",
+    link: "https://github.com/Muauli/Chatbot_RAG",
     visual: "api",
   },
 ];
