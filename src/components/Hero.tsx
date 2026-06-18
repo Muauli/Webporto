@@ -1,15 +1,20 @@
 "use client";
 
-import { useRef } from "react";
 import { motion } from "framer-motion";
-import image from "next/image";
 import Dynamic from "next/dynamic";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import Photo from "./photo";
+import { useEffect, useState } from "react";
 
 const Heroscene = Dynamic(() => import("./Heroscene"), { ssr: false });
 
 export default function Hero() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 2600);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <section
       id="hero"
@@ -23,8 +28,6 @@ export default function Hero() {
       }}
     >
       <Heroscene />
-
-      {/* Gradient overlay */}
       <div
         style={{
           position: "absolute",
@@ -39,7 +42,6 @@ export default function Hero() {
           pointerEvents: "none",
         }}
       />
-      {/* Layout: teks kiri, foto kanan */}
       <div
         style={{
           position: "relative",
@@ -54,11 +56,10 @@ export default function Hero() {
           paddingBottom: "clamp(40px, 6vh, 80px)",
         }}
       >
-        {/* Kolom kiri — teks */}
         <div style={{ flex: 1, minWidth: "280px" }}>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             style={{
               fontSize: "11px",
@@ -71,12 +72,11 @@ export default function Hero() {
             Backend Developer · RPA · Machine Learning
           </motion.p>
 
-          {/* Nama muncul per baris */}
           {["Muhammad", "Reza Aulia"].map((word, i) => (
             <div key={word} style={{ overflow: "hidden" }}>
               <motion.h1
                 initial={{ opacity: 0, y: 80 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{
                   duration: 0.9,
                   delay: 0.4 + i * 0.15,
@@ -98,10 +98,9 @@ export default function Hero() {
             </div>
           ))}
 
-          {/* Deskripsi singkat */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.7, delay: 0.85 }}
             style={{
               marginTop: "24px",
@@ -116,10 +115,9 @@ export default function Hero() {
             real-world impact.
           </motion.p>
 
-          {/* Tombol CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.7, delay: 1.05 }}
             style={{
               display: "flex",
