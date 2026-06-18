@@ -1,123 +1,412 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
-import {
-  PythonOriginal,
-  DjangoPlain, // Django biasanya menggunakan 'Plain' karena logonya solid/satu warna
-  PostgresqlOriginal,
-  NodejsOriginal,
-  JavascriptOriginal,
-  TypescriptOriginal,
-  DockerOriginal,
-  GoOriginal,
-  PytorchOriginal,
-  TensorflowOriginal,
-  TailwindcssOriginal,
-  GitOriginal,
-} from "devicons-react";
+import { ArrowRight } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Map nama tag ke komponen icon devicons
-const techIcons: Record<
-  string,
-  React.ComponentType<{ size?: number; className?: string }>
-> = {
-  PythonOriginal,
-  DjangoPlain,
-  PostgreSQL: PostgresqlOriginal,
-  "Node.js": NodejsOriginal,
-  JavaScript: JavascriptOriginal,
-  TypeScript: TypescriptOriginal,
-  TailwindcssOriginal,
-  GitOriginal,
-  DockerOriginal,
-  GoOriginal,
-  PyTorch: PytorchOriginal,
-  TensorFlow: TensorflowOriginal,
-};
-
 const experiences = [
   {
+    number: "01",
     period: "Aug 2025 — Jan 2026",
-    role: "RPA Developer",
+    role: "AI & RPA Developer Intern",
     company: "PT Telekomunikasi Indonesia",
     location: "South Jakarta",
-    type: "Internship",
-    star: "Telkom Indonesia had 6 manual SAP FI/CO financial reporting processes consuming significant finance team hours monthly. I was tasked with automating all 6 use cases end-to-end using Python, n8n, and Power Automate, while also building an internal web interface for 6 finance personnel and a RAG chatbot for recruitment FAQs. The result was full automation of all 6 workflows with insights delivered via Power BI dashboards, and a chatbot backed by 40 curated QA pairs that significantly reduced manual response time.",
-    tags: ["Python", "n8n", "Power Automate", "Power BI", "RAG", "SAP"],
-    techIcons: ["Python"],
+    tags: ["Python", "n8n", "Power Automate", "Power BI", "SAP"],
     accent: "#c8f04f",
-    number: "01",
+    description:
+      "Automated 6 SAP FI/CO financial reporting workflows. Built an internal web interface and a RAG chatbot with 40-pair knowledge base for recruitment FAQ automation.",
+    // Warna visual unik per card
+    visualColor: "#e8f5d0",
+    visualPattern: "flow",
   },
   {
+    number: "02",
     period: "Jul — Aug 2025",
-    role: "Backend Developer",
+    role: "Backend Developer Intern",
     company: "PT Finnet Indonesia",
     location: "South Jakarta",
-    type: "Internship",
-    star: "An internal ITSM CRM used by 100+ users was experiencing slow and unfiltered data retrieval, creating performance bottlenecks in daily operations. My task was to implement efficient search, filter, and server-side pagination features for the backend. I built the APIs from scratch with optimized query handling and proper pagination logic. This directly improved data retrieval efficiency and reduced heavy response payloads across all 100+ active users.",
-    tags: ["REST API", "Server-side Pagination", "Search & Filter", "Backend"],
-    techIcons: ["Python", "Django", "PostgreSQL"],
+    tags: ["REST API", "Django", "PostgreSQL", "Server-side Pagination"],
     accent: "#a78bfa",
-    number: "02",
+    description:
+      "Built search, filter, and server-side pagination APIs for an internal ITSM CRM serving 100+ daily users, improving data retrieval efficiency.",
+    visualColor: "#ede8fc",
+    visualPattern: "grid",
   },
   {
+    number: "03",
     period: "Apr — Dec 2025",
-    role: "Backend Developer",
+    role: "Backend Developer Intern",
     company: "Nevmock",
     location: "Bandung",
-    type: "Part-time",
-    star: "A Bandung-based startup building a no-code website builder needed a robust backend to handle drag-and-drop component logic and page assembly. I was responsible for designing the entire data model and backend foundation. I designed a PostgreSQL schema for drag-and-drop layouts, implemented Django services and REST APIs, and enabled users to assemble pages from predefined templates. The result was a fully functional backend that powers the core no-code building experience of the platform.",
     tags: ["Django", "PostgreSQL", "REST API", "No-code"],
-    techIcons: ["Django", "PostgreSQL", "Python"],
     accent: "#67e8f9",
-    number: "03",
-  },
-  {
-    period: "Self Project · 2025",
-    role: "Machine Learning Engineer",
-    company: "Phishing Email Detection",
-    location: "Published · HuggingFace Hub",
-    type: "Research",
-    star: "Standard text-only phishing detection models showed limited precision on legitimate emails, leading to false positives that eroded user trust. My goal was to improve detection by incorporating emotion features alongside text features in a novel dual-branch architecture. I fine-tuned DistilBERT on 40,000 samples for 6 emotion labels, then built a dual-branch LSTM that fuses text and emotion representations for final classification. Evaluated on 5,800 emails, the model achieved 98% accuracy and improved precision by 0.03 over the text-only baseline, and the fine-tuned model is now publicly available on HuggingFace Hub.",
-    tags: ["PyTorch", "DistilBERT", "LSTM", "HuggingFace", "NLP"],
-    techIcons: ["Python", "PyTorch", "TensorFlow"],
-    accent: "#f9a8d4",
-    number: "04",
+    description:
+      "Designed PostgreSQL schema and implemented Django REST APIs for a no-code website builder, enabling drag-and-drop page assembly from predefined templates.",
+    visualColor: "#e0f8fc",
+    visualPattern: "nodes",
   },
 ];
 
+function ExpVisualCanvas({
+  pattern,
+  accent,
+  bg,
+}: {
+  pattern: string;
+  accent: string;
+  bg: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let W = canvas.offsetWidth;
+    let H = canvas.offsetHeight;
+    canvas.width = W;
+    canvas.height = H;
+    let animId: number;
+    let t = 0;
+
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `${r},${g},${b}`;
+    };
+    const rgb = hexToRgb(accent);
+
+    const draw = () => {
+      animId = requestAnimationFrame(draw);
+      t += 0.008;
+      ctx.clearRect(0, 0, W, H);
+
+      if (pattern === "flow") {
+        for (let l = 0; l < 8; l++) {
+          ctx.beginPath();
+          const yBase = H * 0.15 + l * H * 0.1;
+          for (let x = 0; x <= W; x += 4) {
+            const y =
+              yBase +
+              Math.sin(x * 0.008 + t + l * 0.5) * 20 +
+              Math.sin(x * 0.004 - t * 0.7) * 12;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = `rgba(${rgb},${0.15 + (l % 3) * 0.08})`;
+          ctx.lineWidth = l % 2 === 0 ? 1.5 : 0.8;
+          ctx.stroke();
+        }
+        for (let d = 0; d < 5; d++) {
+          const progress = (t * 0.15 + d * 0.2) % 1;
+          const x = progress * W;
+          const l = d % 8;
+          const yBase = H * 0.15 + l * H * 0.1;
+          const y = yBase + Math.sin(x * 0.008 + t + l * 0.5) * 20;
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},0.8)`;
+          ctx.fill();
+        }
+      } else if (pattern === "grid") {
+        const cols = 8,
+          rows = 6;
+        const cw = W / cols,
+          ch = H / rows;
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            const pulse = (Math.sin(t * 1.2 + c * 0.5 + r * 0.7) + 1) / 2;
+            const x = c * cw,
+              y = r * ch;
+            ctx.beginPath();
+            ctx.rect(x + 2, y + 2, cw - 4, ch - 4);
+            ctx.fillStyle = `rgba(${rgb},${pulse * 0.12})`;
+            ctx.fill();
+            ctx.strokeStyle = `rgba(${rgb},${0.08 + pulse * 0.1})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+        const activeRow = Math.floor(((Math.sin(t * 0.5) + 1) / 2) * rows);
+        for (let c = 0; c < cols; c++) {
+          ctx.beginPath();
+          ctx.rect(c * cw + 2, activeRow * ch + 2, cw - 4, ch - 4);
+          ctx.fillStyle = `rgba(${rgb},0.25)`;
+          ctx.fill();
+        }
+      } else {
+        const nodeCount = 8;
+        const nodes = Array.from({ length: nodeCount }, (_, i) => ({
+          x: W * 0.1 + (i % 4) * W * 0.27 + Math.sin(t * 0.6 + i) * 12,
+          y:
+            H * 0.2 + Math.floor(i / 4) * H * 0.55 + Math.cos(t * 0.4 + i) * 10,
+        }));
+        nodes.forEach((a, i) => {
+          nodes.forEach((b, j) => {
+            if (j <= i) return;
+            const dx = a.x - b.x,
+              dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < W * 0.5) {
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.strokeStyle = `rgba(${rgb},${0.15 * (1 - dist / (W * 0.5))})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          });
+          const pulse = (Math.sin(t + i * 0.7) + 1) / 2;
+          ctx.beginPath();
+          ctx.arc(a.x, a.y, 4 + pulse * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},${0.5 + pulse * 0.4})`;
+          ctx.fill();
+        });
+        for (let p = 0; p < 3; p++) {
+          const prog = (t * 0.2 + p * 0.33) % 1;
+          const from = nodes[0],
+            to = nodes[p + 2] || nodes[1];
+          const px = from.x + (to.x - from.x) * prog;
+          const py = from.y + (to.y - from.y) * prog;
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},${Math.sin(prog * Math.PI)})`;
+          ctx.fill();
+        }
+      }
+    };
+
+    draw();
+    const onResize = () => {
+      W = canvas.offsetWidth;
+      H = canvas.offsetHeight;
+      canvas.width = W;
+      canvas.height = H;
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [pattern, accent]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: "100%", height: "100%", display: "block" }}
+    />
+  );
+}
+
+function ExpCard({ exp }: { exp: (typeof experiences)[0]; index: number }) {
+  const [hovered, setHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      className="exp-panel"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        opacity: 0,
+        border: "0.5px solid rgba(0,0,0,0.08)",
+        borderRadius: "20px",
+        overflow: "hidden",
+        background: "#ffffff",
+        cursor: "default",
+        transition: "box-shadow 0.4s",
+        boxShadow: hovered
+          ? "0 20px 60px rgba(0,0,0,0.1)"
+          : "0 2px 12px rgba(0,0,0,0.04)",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          height: "clamp(200px, 28vh, 320px)",
+          background: exp.visualColor,
+          overflow: "hidden",
+        }}
+      >
+        <ExpVisualCanvas
+          pattern={exp.visualPattern}
+          accent={exp.accent}
+          bg={exp.visualColor}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "24px",
+            fontFamily: "var(--font-dm-serif)",
+            fontSize: "clamp(48px, 8vw, 80px)",
+            color: "rgba(0,0,0,0.06)",
+            letterSpacing: "-4px",
+            lineHeight: 1,
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {exp.number}
+        </div>
+
+        <motion.div
+          animate={{
+            opacity: hovered ? 1 : 0,
+            scale: hovered ? 1 : 0.6,
+            x: hovered ? 0 : -10,
+            y: hovered ? 0 : 10,
+          }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "24px",
+            width: "48px",
+            height: "48px",
+            borderRadius: "50%",
+            background: "var(--black)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "18px",
+            color: exp.accent,
+          }}
+        >
+          <ArrowRight size={16} />
+        </motion.div>
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: "16px",
+            right: "20px",
+            fontSize: "11px",
+            color: "rgba(0,0,0,0.4)",
+            letterSpacing: "1px",
+            background: "rgba(255,255,255,0.8)",
+            padding: "4px 10px",
+            borderRadius: "100px",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          {exp.period}
+        </div>
+      </div>
+      <div
+        style={{
+          padding: "clamp(20px, 3vw, 32px)",
+          borderTop: "0.5px solid rgba(0,0,0,0.06)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "8px",
+            marginBottom: "12px",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                fontSize: "11px",
+                color: exp.accent,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                marginBottom: "4px",
+                background: "var(--black)",
+                display: "inline-block",
+                padding: "2px 8px",
+                borderRadius: "4px",
+              }}
+            >
+              {exp.role}
+            </p>
+            <h3
+              style={{
+                fontFamily: "var(--font-dm-serif)",
+                fontSize: "clamp(18px, 2vw, 24px)",
+                color: "var(--black)",
+                letterSpacing: "-0.5px",
+                marginTop: "4px",
+              }}
+            >
+              {exp.company}
+            </h3>
+          </div>
+          <span
+            style={{
+              fontSize: "11px",
+              color: "#aaa",
+              paddingTop: "4px",
+            }}
+          >
+            {exp.location}
+          </span>
+        </div>
+
+        <p
+          style={{
+            fontSize: "13px",
+            color: "#666",
+            lineHeight: 1.75,
+            marginBottom: "16px",
+          }}
+        >
+          {exp.description}
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {exp.tags.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                padding: "4px 12px",
+                background: "#f5f5f3",
+                borderRadius: "100px",
+                fontSize: "11px",
+                color: "#888",
+                border: "0.5px solid rgba(0,0,0,0.08)",
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Experience() {
   const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  const bgOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.85, 1],
-    [0, 1, 1, 0],
-  );
-  const lineHeight = useTransform(scrollYProgress, [0.1, 0.9], ["0%", "100%"]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>(".exp-card").forEach((card) => {
+      gsap.utils.toArray<HTMLElement>(".exp-panel").forEach((panel) => {
         gsap.fromTo(
-          card,
-          { opacity: 0, y: 60 },
+          panel,
+          { opacity: 0, y: 60, clipPath: "inset(8% 0% 0% 0%)" },
           {
             opacity: 1,
             y: 0,
-            duration: 0.9,
+            clipPath: "inset(0% 0% 0% 0%)",
+            duration: 1.1,
             ease: "power3.out",
             scrollTrigger: {
-              trigger: card,
+              trigger: panel,
               start: "top 88%",
               toggleActions: "play none none reverse",
             },
@@ -132,298 +421,74 @@ export default function Experience() {
     <section
       id="experience"
       ref={sectionRef}
-      className="section-panel"
       style={{
+        background: "var(--white)",
+        padding: "clamp(80px, 12vh, 120px) clamp(24px, 5vw, 64px)",
         position: "relative",
-        padding: "clamp(100px, 15vh, 160px) clamp(20px, 5vw, 80px)",
-        minHeight: "100vh",
       }}
     >
-      <motion.div
+      <div
         style={{
-          position: "absolute",
-          inset: 0,
-          background: "#f8f8f6",
-          opacity: bgOpacity,
-          zIndex: 0,
-          pointerEvents: "none",
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
+          alignItems: "flex-end",
+          gap: "24px",
+          marginBottom: "clamp(48px, 8vh, 80px)",
+          flexWrap: "wrap",
         }}
-      />
-
-      <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Label */}
-        <motion.p
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: false }}
-          transition={{ duration: 0.6 }}
-          style={{
-            fontSize: "11px",
-            letterSpacing: "3px",
-            color: "var(--mid)",
-            textTransform: "uppercase",
-            marginBottom: "16px",
-          }}
-        >
-          02 / Experience
-        </motion.p>
-
+      >
         <motion.h2
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           style={{
             fontFamily: "var(--font-dm-serif)",
-            fontSize: "clamp(32px, 5vw, 60px)",
-            letterSpacing: "-2px",
+            fontSize: "clamp(40px, 7vw, 96px)",
+            letterSpacing: "-4px",
             color: "var(--black)",
-            marginBottom: "72px",
+            lineHeight: 0.95,
           }}
         >
-          {"Where I've worked"}
+          Work
+          <br />
+          <em style={{ color: "rgba(0,0,0,0.25)" }}>Experience</em>
         </motion.h2>
 
-        {/* Timeline */}
-        <div style={{ position: "relative" }}>
-          <div
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          style={{ textAlign: "right", paddingBottom: "8px" }}
+        >
+          <p
             style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "1px",
-              background: "#e0e0e0",
+              fontSize: "11px",
+              letterSpacing: "3px",
+              color: "var(--mid)",
+              textTransform: "uppercase",
+              marginBottom: "6px",
             }}
-          />
-          <motion.div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              width: "1px",
-              background: "var(--black)",
-              height: lineHeight,
-            }}
-          />
+          >
+            02 / Experience
+          </p>
+          <p style={{ fontSize: "13px", color: "#aaa", maxWidth: "200px" }}>
+            3 internships across automation, backend, and AI
+          </p>
+        </motion.div>
+      </div>
 
-          <div style={{ paddingLeft: "clamp(24px, 4vw, 56px)" }}>
-            {experiences.map((exp) => (
-              <div
-                key={exp.company}
-                className="exp-card"
-                style={{ marginBottom: "clamp(32px, 5vh, 56px)", opacity: 0 }}
-              >
-                {/* Dot timeline */}
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    width: "9px",
-                    height: "9px",
-                    borderRadius: "50%",
-                    background: exp.accent,
-                    transform: "translateX(-50%)",
-                    boxShadow: `0 0 14px ${exp.accent}`,
-                    marginTop: "28px",
-                  }}
-                />
-
-                {/* Card */}
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  style={{
-                    background: "#ffffff",
-                    border: "0.5px solid #ebebeb",
-                    borderRadius: "20px",
-                    padding: "clamp(24px, 3vw, 40px)",
-                    boxShadow: "0 2px 20px rgba(0,0,0,0.04)",
-                    transition: "box-shadow 0.3s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 12px 48px rgba(0,0,0,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 20px rgba(0,0,0,0.04)";
-                  }}
-                >
-                  {/* Header */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                      gap: "16px",
-                      marginBottom: "24px",
-                      paddingBottom: "24px",
-                      borderBottom: "0.5px solid #f0f0f0",
-                    }}
-                  >
-                    {/* Kiri header */}
-                    <div>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          padding: "3px 12px",
-                          background: `${exp.accent}18`,
-                          border: `0.5px solid ${exp.accent}50`,
-                          borderRadius: "100px",
-                          fontSize: "10px",
-                          color: exp.accent,
-                          letterSpacing: "1.5px",
-                          textTransform: "uppercase",
-                          marginBottom: "10px",
-                        }}
-                      >
-                        {exp.type}
-                      </span>
-                      <h3
-                        style={{
-                          fontFamily: "var(--font-dm-serif)",
-                          fontSize: "clamp(20px, 2.5vw, 28px)",
-                          color: "var(--black)",
-                          letterSpacing: "-0.5px",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {exp.company}
-                      </h3>
-                      <p
-                        style={{
-                          fontSize: "13px",
-                          color: exp.accent,
-                          fontWeight: 700,
-                          letterSpacing: "0.3px",
-                        }}
-                      >
-                        {exp.role}
-                      </p>
-                    </div>
-
-                    {/* Kanan header — nomor + periode + tech icons */}
-                    <div style={{ textAlign: "right" }}>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-serif)",
-                          fontSize: "clamp(36px, 4vw, 52px)",
-                          color: "#f0f0f0",
-                          letterSpacing: "-3px",
-                          lineHeight: 1,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        {exp.number}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "#bbb",
-                          marginBottom: "2px",
-                        }}
-                      >
-                        {exp.period}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "11px",
-                          color: "#ccc",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        {exp.location}
-                      </p>
-
-                      {/* Tech icons row */}
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          justifyContent: "flex-end",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {exp.techIcons.map((tech) => {
-                          const Icon = techIcons[tech];
-                          return Icon ? (
-                            <div
-                              key={tech}
-                              title={tech}
-                              style={{
-                                width: "32px",
-                                height: "32px",
-                                background: "#f8f8f8",
-                                borderRadius: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: "0.5px solid #ebebeb",
-                              }}
-                            >
-                              <Icon size={18} />
-                            </div>
-                          ) : (
-                            <div
-                              key={tech}
-                              title={tech}
-                              style={{
-                                padding: "4px 10px",
-                                background: "#f8f8f8",
-                                borderRadius: "6px",
-                                fontSize: "10px",
-                                color: "#999",
-                                border: "0.5px solid #ebebeb",
-                              }}
-                            >
-                              {tech}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* STAR description — plain text */}
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#555",
-                      lineHeight: 1.8,
-                      marginBottom: "20px",
-                      maxWidth: "860px",
-                    }}
-                  >
-                    {exp.star}
-                  </p>
-
-                  {/* Tags */}
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
-                  >
-                    {exp.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        style={{
-                          padding: "5px 13px",
-                          background: "#f5f5f5",
-                          borderRadius: "100px",
-                          fontSize: "11px",
-                          color: "#888",
-                          border: "0.5px solid #eee",
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "clamp(12px, 2vw, 20px)",
+        }}
+      >
+        {experiences.map((exp, i) => (
+          <ExpCard key={exp.company} exp={exp} index={i} />
+        ))}
       </div>
     </section>
   );

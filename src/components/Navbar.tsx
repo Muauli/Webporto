@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Italic } from "lucide-react";
 
 const navLinks = [
   { label: "About", href: "#about" },
@@ -18,7 +19,6 @@ export default function Navbar() {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
 
-    // Detect section aktif untuk highlight nav link
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -70,25 +70,24 @@ export default function Navbar() {
         transition: "background 0.4s ease, border 0.4s ease",
       }}
     >
-      {/* Logo — klik scroll ke atas dengan animasi */}
       <button
         onClick={scrollToTop}
         style={{
-          fontFamily: "var(--font-syne)",
-          fontWeight: 800,
-          fontSize: "clamp(12px, 1.5vw, 15px)",
-          letterSpacing: "-0.5px",
+          fontFamily: "var(--font-dm-serif)",
+          fontWeight: 400,
+          fontSize: "clamp(13px, 1.6vw, 16px)",
+          letterSpacing: "-0.3px",
           background: "none",
           border: "none",
           cursor: "pointer",
           color: "var(--black)",
           padding: 0,
+          fontStyle: "italic",
         }}
       >
-        Muhammad Reza Aulia
+        ROY.
       </button>
 
-      {/* Nav links */}
       <div style={{ display: "flex", gap: "clamp(16px, 3vw, 36px)" }}>
         {navLinks.map((link) => (
           <button
