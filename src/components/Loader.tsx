@@ -9,7 +9,6 @@ export default function Loader() {
   const [phase, setPhase] = useState<"counting" | "reveal">("counting");
 
   useEffect(() => {
-    // Progress bar naik dari 0 ke 100
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -18,7 +17,7 @@ export default function Loader() {
           setTimeout(() => setVisible(false), 1400);
           return 100;
         }
-        // Naik tidak linear — pelan di awal, cepat di akhir
+
         const increment = prev < 60 ? 1.2 : prev < 85 ? 2.5 : 4;
         return Math.min(prev + increment, 100);
       });
@@ -45,7 +44,6 @@ export default function Loader() {
             overflow: "hidden",
           }}
         >
-          {/* Panel hitam yang slide up saat exit */}
           <motion.div
             animate={phase === "reveal" ? { y: "-100%" } : { y: 0 }}
             transition={{
@@ -60,7 +58,6 @@ export default function Loader() {
             }}
           />
 
-          {/* Nama muncul huruf per huruf */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -91,7 +88,6 @@ export default function Loader() {
             ))}
           </motion.div>
 
-          {/* Progress bar bawah */}
           <div
             style={{
               width: "100%",
@@ -114,7 +110,6 @@ export default function Loader() {
             />
           </div>
 
-          {/* Angka progress */}
           <div
             style={{
               display: "flex",
