@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Italic } from "lucide-react";
-
 const navLinks = [
   { label: "About", href: "#about" },
   { label: "Experience", href: "#experience" },
@@ -85,7 +83,7 @@ export default function Navbar() {
           fontStyle: "italic",
         }}
       >
-        ROY.
+        Roy.
       </button>
 
       <div style={{ display: "flex", gap: "clamp(16px, 3vw, 36px)" }}>
@@ -123,8 +121,6 @@ export default function Navbar() {
           </button>
         ))}
       </div>
-
-      {/* Status */}
       <div
         style={{
           display: "flex",

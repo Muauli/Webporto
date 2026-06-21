@@ -11,7 +11,6 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Ganti dengan nilai dari EmailJS dashboard kamu
 const EMAILJS_SERVICE_ID = "service_jpg1a9m";
 const EMAILJS_TEMPLATE_ID = "template_mx8wtps";
 const EMAILJS_PUBLIC_KEY = "uoO35mhNxvEvbkv9V";
@@ -153,7 +152,6 @@ export default function Contact() {
         minHeight: "100vh",
       }}
     >
-      {/* Background */}
       <motion.div
         style={{
           position: "absolute",
@@ -166,7 +164,6 @@ export default function Contact() {
       />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Label */}
         <motion.p
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -183,7 +180,6 @@ export default function Contact() {
           04 / Contact
         </motion.p>
 
-        {/* Grid: kiri info, kanan form */}
         <div
           style={{
             display: "grid",
@@ -192,7 +188,6 @@ export default function Contact() {
             alignItems: "start",
           }}
         >
-          {/* Kiri — info + social */}
           <div className="contact-left" style={{ opacity: 0 }}>
             <h2
               style={{
@@ -224,8 +219,6 @@ export default function Contact() {
               collaborations. Drop a message and I&apos;ll get back to you
               within 24 hours.
             </p>
-
-            {/* Contact info */}
             <div
               style={{
                 display: "flex",
@@ -357,8 +350,6 @@ export default function Contact() {
                 </p>
               </div>
             </div>
-
-            {/* Download CV button */}
             <a
               href="/Muhammad_Reza_Aulia-Resume.pdf"
               download
@@ -390,8 +381,6 @@ export default function Contact() {
               Download Resume <ArrowDown size={16} />
             </a>
           </div>
-
-          {/* Kanan — form */}
           <div className="contact-right" style={{ opacity: 0 }}>
             <form
               ref={formRef}
@@ -402,7 +391,6 @@ export default function Contact() {
                 gap: "32px",
               }}
             >
-              {/* Row: name + email */}
               <div
                 style={{
                   display: "grid",
@@ -440,7 +428,6 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Subject */}
               <div>
                 <label style={labelStyle}>Subject</label>
                 <input
@@ -455,7 +442,6 @@ export default function Contact() {
                 />
               </div>
 
-              {/* Message */}
               <div>
                 <label style={labelStyle}>Message *</label>
                 <textarea
@@ -477,7 +463,6 @@ export default function Contact() {
                 />
               </div>
 
-              {/* Submit */}
               <motion.button
                 type="submit"
                 disabled={status === "sending"}
