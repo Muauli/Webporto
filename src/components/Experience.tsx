@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
-import { ArrowRight } from "lucide-react";
+import { TechBadge } from "./TechIcon";
+import { MoveRight } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,55 +13,66 @@ const experiences = [
   {
     number: "01",
     period: "Aug 2025 — Jan 2026",
-    role: "AI & RPA Developer Intern",
-    company: "PT Telekomunikasi Indonesia",
+    role: "AI & RPA Developer",
+    company: "PT Telkom Indonesia",
     location: "South Jakarta",
     tags: ["Python", "n8n", "Power Automate", "Power BI", "SAP"],
     accent: "#c8f04f",
     description:
-      "Automated 6 SAP FI/CO financial reporting workflows. Built an internal web interface and a RAG chatbot with 40-pair knowledge base for recruitment FAQ automation.",
-    // Warna visual unik per card
-    visualColor: "#e8f5d0",
+      "Automated 6 SAP FI/CO financial reporting workflows using Python, n8n, and Power Automate. Built an internal web interface for finance personnel to trigger RPA workflows with custom parameters, and developed a RAG chatbot with a curated 40-pair knowledge base for recruitment FAQ automation, with final insights delivered via Power BI dashboards.",
+    visualColor: "#eef7dc",
     visualPattern: "flow",
   },
   {
     number: "02",
     period: "Jul — Aug 2025",
-    role: "Backend Developer Intern",
+    role: "Backend Developer",
     company: "PT Finnet Indonesia",
     location: "South Jakarta",
-    tags: ["REST API", "Django", "PostgreSQL", "Server-side Pagination"],
+    tags: ["Python", "DBeaver", "TypeScript"],
     accent: "#a78bfa",
     description:
-      "Built search, filter, and server-side pagination APIs for an internal ITSM CRM serving 100+ daily users, improving data retrieval efficiency.",
-    visualColor: "#ede8fc",
+      "Developed backend features for an internal ITSM CRM serving 100+ daily users. Implemented search and filter APIs alongside server-side pagination, improving data retrieval efficiency and significantly reducing heavy response payloads at scale.",
+    visualColor: "#f1edfc",
     visualPattern: "grid",
   },
   {
     number: "03",
     period: "Apr — Dec 2025",
-    role: "Backend Developer Intern",
+    role: "Backend Developer",
     company: "Nevmock",
-    location: "Bandung",
-    tags: ["Django", "PostgreSQL", "REST API", "No-code"],
+    location: "Remote Bandung",
+    tags: ["Django", "PostgreSQL", "Python"],
     accent: "#67e8f9",
     description:
-      "Designed PostgreSQL schema and implemented Django REST APIs for a no-code website builder, enabling drag-and-drop page assembly from predefined templates.",
-    visualColor: "#e0f8fc",
+      "Designed a PostgreSQL data model for drag-and-drop component layouts and implemented Django REST APIs for a no-code website builder, enabling users to assemble pages and site structures directly from predefined templates.",
+    visualColor: "#e7f9fc",
     visualPattern: "nodes",
   },
 ];
 
+function hexToRgb(hex: string) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r},${g},${b}`;
+}
+
 function ExpVisualCanvas({
   pattern,
   accent,
-  bg,
+  hovered,
 }: {
   pattern: string;
   accent: string;
-  bg: string;
+  hovered: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hoveredRef = useRef(hovered);
+
+  useEffect(() => {
+    hoveredRef.current = hovered;
+  }, [hovered]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,17 +87,13 @@ function ExpVisualCanvas({
     let animId: number;
     let t = 0;
 
-    const hexToRgb = (hex: string) => {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return `${r},${g},${b}`;
-    };
     const rgb = hexToRgb(accent);
 
     const draw = () => {
       animId = requestAnimationFrame(draw);
-      t += 0.008;
+      const intensity = hoveredRef.current ? 1.7 : 1;
+      const glow = hoveredRef.current ? 1.6 : 1;
+      t += 0.008 * intensity;
       ctx.clearRect(0, 0, W, H);
 
       if (pattern === "flow") {
@@ -100,7 +108,7 @@ function ExpVisualCanvas({
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
-          ctx.strokeStyle = `rgba(${rgb},${0.15 + (l % 3) * 0.08})`;
+          ctx.strokeStyle = `rgba(${rgb},${(0.15 + (l % 3) * 0.08) * glow})`;
           ctx.lineWidth = l % 2 === 0 ? 1.5 : 0.8;
           ctx.stroke();
         }
@@ -112,7 +120,7 @@ function ExpVisualCanvas({
           const y = yBase + Math.sin(x * 0.008 + t + l * 0.5) * 20;
           ctx.beginPath();
           ctx.arc(x, y, 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},0.8)`;
+          ctx.fillStyle = `rgba(${rgb},${0.8 * glow})`;
           ctx.fill();
         }
       } else if (pattern === "grid") {
@@ -127,9 +135,9 @@ function ExpVisualCanvas({
               y = r * ch;
             ctx.beginPath();
             ctx.rect(x + 2, y + 2, cw - 4, ch - 4);
-            ctx.fillStyle = `rgba(${rgb},${pulse * 0.12})`;
+            ctx.fillStyle = `rgba(${rgb},${pulse * 0.12 * glow})`;
             ctx.fill();
-            ctx.strokeStyle = `rgba(${rgb},${0.08 + pulse * 0.1})`;
+            ctx.strokeStyle = `rgba(${rgb},${(0.08 + pulse * 0.1) * glow})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -138,7 +146,7 @@ function ExpVisualCanvas({
         for (let c = 0; c < cols; c++) {
           ctx.beginPath();
           ctx.rect(c * cw + 2, activeRow * ch + 2, cw - 4, ch - 4);
-          ctx.fillStyle = `rgba(${rgb},0.25)`;
+          ctx.fillStyle = `rgba(${rgb},${0.25 * glow})`;
           ctx.fill();
         }
       } else {
@@ -158,7 +166,7 @@ function ExpVisualCanvas({
               ctx.beginPath();
               ctx.moveTo(a.x, a.y);
               ctx.lineTo(b.x, b.y);
-              ctx.strokeStyle = `rgba(${rgb},${0.15 * (1 - dist / (W * 0.5))})`;
+              ctx.strokeStyle = `rgba(${rgb},${0.15 * (1 - dist / (W * 0.5)) * glow})`;
               ctx.lineWidth = 0.8;
               ctx.stroke();
             }
@@ -166,7 +174,7 @@ function ExpVisualCanvas({
           const pulse = (Math.sin(t + i * 0.7) + 1) / 2;
           ctx.beginPath();
           ctx.arc(a.x, a.y, 4 + pulse * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},${0.5 + pulse * 0.4})`;
+          ctx.fillStyle = `rgba(${rgb},${(0.5 + pulse * 0.4) * glow})`;
           ctx.fill();
         });
         for (let p = 0; p < 3; p++) {
@@ -177,7 +185,7 @@ function ExpVisualCanvas({
           const py = from.y + (to.y - from.y) * prog;
           ctx.beginPath();
           ctx.arc(px, py, 4, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},${Math.sin(prog * Math.PI)})`;
+          ctx.fillStyle = `rgba(${rgb},${Math.sin(prog * Math.PI) * glow})`;
           ctx.fill();
         }
       }
@@ -205,43 +213,37 @@ function ExpVisualCanvas({
   );
 }
 
-function ExpCard({ exp }: { exp: (typeof experiences)[0]; index: number }) {
+function ExpCard({ exp }: { exp: (typeof experiences)[0] }) {
   const [hovered, setHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   return (
     <motion.div
-      ref={cardRef}
       className="exp-panel"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        opacity: 0,
-        border: "0.5px solid rgba(0,0,0,0.08)",
-        borderRadius: "20px",
-        overflow: "hidden",
-        background: "#ffffff",
-        cursor: "default",
-        transition: "box-shadow 0.4s",
-        boxShadow: hovered
-          ? "0 20px 60px rgba(0,0,0,0.1)"
-          : "0 2px 12px rgba(0,0,0,0.04)",
-      }}
+      style={{ opacity: 0 }}
     >
       <div
         style={{
           position: "relative",
-          height: "clamp(200px, 28vh, 320px)",
-          background: exp.visualColor,
+          height: "clamp(220px, 30vh, 340px)",
+          borderRadius: "18px",
           overflow: "hidden",
+          background: exp.visualColor,
+          marginBottom: "20px",
         }}
       >
-        <ExpVisualCanvas
-          pattern={exp.visualPattern}
-          accent={exp.accent}
-          bg={exp.visualColor}
-        />
-
+        <motion.div
+          animate={{ scale: hovered ? 1.04 : 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <ExpVisualCanvas
+            pattern={exp.visualPattern}
+            accent={exp.accent}
+            hovered={hovered}
+          />
+        </motion.div>
         <div
           style={{
             position: "absolute",
@@ -249,7 +251,7 @@ function ExpCard({ exp }: { exp: (typeof experiences)[0]; index: number }) {
             left: "24px",
             fontFamily: "var(--font-dm-serif)",
             fontSize: "clamp(48px, 8vw, 80px)",
-            color: "rgba(0,0,0,0.06)",
+            color: "rgba(0,0,0,0.05)",
             letterSpacing: "-4px",
             lineHeight: 1,
             pointerEvents: "none",
@@ -258,133 +260,66 @@ function ExpCard({ exp }: { exp: (typeof experiences)[0]; index: number }) {
         >
           {exp.number}
         </div>
+      </div>
+      <p
+        style={{
+          fontSize: "11px",
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          color: "var(--mid)",
+          marginBottom: "10px",
+        }}
+      >
+        {exp.role} · {exp.period} · {exp.location}
+      </p>
 
-        <motion.div
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "14px",
+        }}
+      >
+        <h3
+          style={{
+            fontFamily: "var(--font-dm-serif)",
+            fontSize: "clamp(22px, 2.8vw, 32px)",
+            color: "var(--black)",
+            letterSpacing: "-0.5px",
+          }}
+        >
+          {exp.company}
+        </h3>
+        <motion.span
           animate={{
             opacity: hovered ? 1 : 0,
-            scale: hovered ? 1 : 0.6,
             x: hovered ? 0 : -10,
-            y: hovered ? 0 : 10,
           }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            position: "absolute",
-            top: "20px",
-            right: "24px",
-            width: "48px",
-            height: "48px",
-            borderRadius: "50%",
-            background: "var(--black)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
+            fontSize: "clamp(18px, 2vw, 26px)",
             color: exp.accent,
           }}
         >
-          <ArrowRight size={16} />
-        </motion.div>
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: "16px",
-            right: "20px",
-            fontSize: "11px",
-            color: "rgba(0,0,0,0.4)",
-            letterSpacing: "1px",
-            background: "rgba(255,255,255,0.8)",
-            padding: "4px 10px",
-            borderRadius: "100px",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          {exp.period}
-        </div>
+          <MoveRight size={35} />
+        </motion.span>
       </div>
-      <div
+      <p
         style={{
-          padding: "clamp(20px, 3vw, 32px)",
-          borderTop: "0.5px solid rgba(0,0,0,0.06)",
+          fontSize: "13px",
+          color: "#666",
+          lineHeight: 1.75,
+          marginBottom: "16px",
+          maxWidth: "460px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: "8px",
-            marginBottom: "12px",
-          }}
-        >
-          <div>
-            <p
-              style={{
-                fontSize: "11px",
-                color: exp.accent,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-                marginBottom: "4px",
-                background: "var(--black)",
-                display: "inline-block",
-                padding: "2px 8px",
-                borderRadius: "4px",
-              }}
-            >
-              {exp.role}
-            </p>
-            <h3
-              style={{
-                fontFamily: "var(--font-dm-serif)",
-                fontSize: "clamp(18px, 2vw, 24px)",
-                color: "var(--black)",
-                letterSpacing: "-0.5px",
-                marginTop: "4px",
-              }}
-            >
-              {exp.company}
-            </h3>
-          </div>
-          <span
-            style={{
-              fontSize: "11px",
-              color: "#aaa",
-              paddingTop: "4px",
-            }}
-          >
-            {exp.location}
-          </span>
-        </div>
-
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#666",
-            lineHeight: 1.75,
-            marginBottom: "16px",
-          }}
-        >
-          {exp.description}
-        </p>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {exp.tags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                padding: "4px 12px",
-                background: "#f5f5f3",
-                borderRadius: "100px",
-                fontSize: "11px",
-                color: "#888",
-                border: "0.5px solid rgba(0,0,0,0.08)",
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {exp.description}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+        {exp.tags.map((tag) => (
+          <TechBadge key={tag} tag={tag} accent={exp.accent} />
+        ))}
       </div>
     </motion.div>
   );
@@ -398,12 +333,12 @@ export default function Experience() {
       gsap.utils.toArray<HTMLElement>(".exp-panel").forEach((panel) => {
         gsap.fromTo(
           panel,
-          { opacity: 0, y: 60, clipPath: "inset(8% 0% 0% 0%)" },
+          { opacity: 0, y: 50, clipPath: "inset(6% 0% 0% 0%)" },
           {
             opacity: 1,
             y: 0,
             clipPath: "inset(0% 0% 0% 0%)",
-            duration: 1.1,
+            duration: 1,
             ease: "power3.out",
             scrollTrigger: {
               trigger: panel,
@@ -422,9 +357,11 @@ export default function Experience() {
       id="experience"
       ref={sectionRef}
       style={{
-        background: "var(--white)",
+        background:
+          "linear-gradient(180deg, #f0efe8 0%, var(--white) 6%, var(--white) 100%)",
         padding: "clamp(80px, 12vh, 120px) clamp(24px, 5vw, 64px)",
         position: "relative",
+        overflow: "hidden",
       }}
     >
       <div
@@ -433,7 +370,7 @@ export default function Experience() {
           gridTemplateColumns: "1fr auto",
           alignItems: "flex-end",
           gap: "24px",
-          marginBottom: "clamp(48px, 8vh, 80px)",
+          marginBottom: "clamp(56px, 9vh, 96px)",
           flexWrap: "wrap",
         }}
       >
@@ -444,15 +381,13 @@ export default function Experience() {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           style={{
             fontFamily: "var(--font-dm-serif)",
-            fontSize: "clamp(40px, 7vw, 96px)",
+            fontSize: "clamp(40px, 7vw, 88px)",
             letterSpacing: "-4px",
             color: "var(--black)",
-            lineHeight: 0.95,
+            lineHeight: 1,
           }}
         >
-          Work
-          <br />
-          <em style={{ color: "rgba(0,0,0,0.25)" }}>Experience</em>
+          Work Experience
         </motion.h2>
 
         <motion.div
@@ -468,26 +403,33 @@ export default function Experience() {
               letterSpacing: "3px",
               color: "var(--mid)",
               textTransform: "uppercase",
-              marginBottom: "6px",
+              marginBottom: "8px",
             }}
           >
             02 / Experience
           </p>
-          <p style={{ fontSize: "13px", color: "#aaa", maxWidth: "200px" }}>
-            3 internships across automation, backend, and AI
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#999",
+              maxWidth: "260px",
+              lineHeight: 1.6,
+            }}
+          >
+            Three internships across automation, backend systems, and applied
+            AI.
           </p>
         </motion.div>
       </div>
-
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "clamp(12px, 2vw, 20px)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: "clamp(32px, 4vw, 56px)",
         }}
       >
-        {experiences.map((exp, i) => (
-          <ExpCard key={exp.company} exp={exp} index={i} />
+        {experiences.map((exp) => (
+          <ExpCard key={exp.company} exp={exp} />
         ))}
       </div>
     </section>

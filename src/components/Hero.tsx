@@ -5,6 +5,7 @@ import Dynamic from "next/dynamic";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import Photo from "./photo";
 import { useEffect, useState } from "react";
+import TypewriterText from "./TypewriterText";
 
 const Heroscene = Dynamic(() => import("./Heroscene"), { ssr: false });
 
@@ -24,7 +25,6 @@ export default function Hero() {
         display: "flex",
         alignItems: "center",
         padding: "0 clamp(20px, 5vw, 48px)",
-        // overflow: "hidden",
       }}
     >
       <Heroscene />
@@ -60,18 +60,18 @@ export default function Hero() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
             style={{
-              fontSize: "11px",
+              fontSize: "15px",
               letterSpacing: "3px",
               color: "var(--mid)",
               textTransform: "uppercase",
-              marginBottom: "24px",
+              marginBottom: "10px",
+              minHeight: "14px",
             }}
           >
-            Backend Developer · RPA · Machine Learning
+            <TypewriterText />
           </motion.p>
-
           {["Muhammad", "Reza Aulia"].map((word, i) => (
             <div key={word} style={{ overflow: "hidden" }}>
               <motion.h1
