@@ -3,18 +3,40 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Module-level flag: persists for the browser session, resets on hard refresh.
+// Prevents the loader from replaying on back navigation.
+let _loaderPlayed = false;
+
 export default function Loader() {
-  const [visible, setVisible] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"counting" | "reveal">("counting");
 
   useEffect(() => {
+    setMounted(true);
+    if (_loaderPlayed || sessionStorage.getItem("lp") === "1") {
+      _loaderPlayed = true;
+      return;
+    }
+    setVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => setPhase("reveal"), 200);
-          setTimeout(() => setVisible(false), 1400);
+          setTimeout(() => {
+            setVisible(false);
+            _loaderPlayed = true;
+            if (typeof sessionStorage !== "undefined") {
+              sessionStorage.setItem("lp", "1");
+            }
+          }, 1400);
           return 100;
         }
 
@@ -24,7 +46,9 @@ export default function Loader() {
     }, 18);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [visible]);
+
+  if (!mounted) return null;
 
   return (
     <AnimatePresence>
@@ -83,7 +107,7 @@ export default function Loader() {
                 }}
                 style={{ display: char === " " ? "inline" : "inline-block" }}
               >
-                {char === " " ? "\u00A0" : char}
+                {char === " " ? " " : char}
               </motion.span>
             ))}
           </motion.div>

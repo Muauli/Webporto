@@ -35,6 +35,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+install.cmd
+CLAUDE.md
+
 
 # typescript
 *.tsbuildinfo

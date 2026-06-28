@@ -1,287 +1,362 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  startTransition,
+} from "react";
+import { motion } from "framer-motion";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { ArrowUpRight } from "lucide-react";
+import { TechBadge } from "./TechIcon";
+import { useStairTransition } from "./StairTransition";
+import { projects, type ProjectEntry } from "@/data/projects";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const projects = [
-  {
-    number: "01",
-    title: "Phishing Email Detection",
-    subtitle: "ML Research · Published on HuggingFace",
-    description:
-      "A dual-branch LSTM model that fuses text and emotion features to detect phishing emails. Fine-tuned DistilBERT on 40,000 samples across 6 emotion labels. Achieved 98% accuracy on 5,800 test emails — outperforming text-only baseline by 0.03 precision.",
-    tech: ["Python", "PyTorch", "DistilBERT", "LSTM", "HuggingFace"],
-    accent: "#c8f04f",
-    link: "https://github.com/Muauli/Improved-Phishing-email-Detection-using-emotion-feature",
-    visual: "ml",
-  },
-  {
-    number: "02",
-    title: "No-code Website Builder",
-    //subtitle: "Backend · Nevmock",
-    description:
-      "PostgreSQL-backed Django REST API powering a drag-and-drop website builder. Designed the data model for component/layout assembly, implemented services for page structure management, and enabled users to build complete sites from predefined templates.",
-    tech: ["Django", "PostgreSQL", "REST API", "Python"],
-    accent: "#67e8f9",
-    link: "https://github.com/Muauli/JAKA-BACKEND",
-    visual: "backend",
-  },
-  {
-    number: "03",
-    title: "Financial RPA Automation",
-    //subtitle: "RPA · PT Telekomunikasi Indonesia",
-    description:
-      "End-to-end automation of 6 SAP FI/CO financial reporting workflows using Python, n8n, and Power Automate. Includes an internal web interface for finance personnel and a RAG chatbot backed by 40 custom QA pairs for recruitment FAQ automation.",
-    tech: ["Python", "n8n", "Power Automate", "Power BI", "RAG"],
-    accent: "#fbbf24",
-    link: "https://github.com/Muauli/Financial_RPA",
-    visual: "rpa",
-  },
-  {
-    number: "04",
-    title: "FAQ Chatbot using N8N",
-    subtitle: "For recruitment purpose chatbot",
-    description:
-      "Backend features for an internal ITSM CRM serving 100+ users. Implemented search and filter APIs alongside server-side pagination to reduce heavy response payloads and improve overall data retrieval performance at scale.",
-    tech: ["REST API", "Django", "PostgreSQL", "Pagination"],
-    accent: "#a78bfa",
-    link: "https://github.com/Muauli/Chatbot_RAG",
-    visual: "api",
-  },
-];
 
-// Visual placeholder 3D animasi per project type
-function ProjectVisual({ type, accent }: { type: string; accent: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+// ScrambleTitle: always-on vertical slot machine on 2-3 letters, loops forever
+function ScrambleTitle({ title }: { title: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tlsRef = useRef<gsap.core.Timeline[]>([]);
+  const delaysRef = useRef<gsap.core.Tween[]>([]);
+
+  // Pick 2 or 3 non-space letter positions, evenly spaced, deterministic per title
+  const animatedIndices = useMemo(() => {
+    const letters = title
+      .split("")
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => c !== " ");
+    if (letters.length < 2) return letters.map(({ i }) => i);
+    const count = letters.length >= 8 ? 3 : 2;
+    const step = Math.floor(letters.length / count);
+    return Array.from({ length: count }, (_, k) => letters[k * step].i);
+  }, [title]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Recursive cycle: exit, jump from opposite side with same char, enter, repeat
+    function runCycle(inner: HTMLSpanElement, realChar: string) {
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      const speed = 1.2 + Math.random() * 1.6; // 1.2s to 2.8s
+      const restDuration = 0.8 + Math.random() * 1.4;
 
-    let animId: number;
-    let t = 0;
+      const tl = gsap.timeline({
+        onComplete() {
+          const idx = tlsRef.current.indexOf(tl);
+          if (idx !== -1) tlsRef.current.splice(idx, 1);
+          if (inner.isConnected) runCycle(inner, realChar);
+        },
+      });
+      tlsRef.current.push(tl);
 
-    const draw = () => {
-      animId = requestAnimationFrame(draw);
-      t += 0.012;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Rest: real char visible, centered
+      tl.set(inner, { yPercent: 0 });
+      tl.call(() => {
+        inner.textContent = realChar;
+      });
+      tl.to(inner, { duration: restDuration });
 
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const accentRgb =
-        accent === "#c8f04f"
-          ? "200,240,79"
-          : accent === "#67e8f9"
-            ? "103,232,249"
-            : accent === "#fbbf24"
-              ? "251,191,36"
-              : "167,139,250";
+      // Exit: letter moves out in dir direction
+      tl.to(inner, {
+        yPercent: dir * 110,
+        duration: speed * 0.3,
+        ease: "power2.in",
+      });
 
-      if (type === "ml") {
-        // Neural network nodes
-        const layers = [3, 5, 5, 3];
-        const layerX = canvas.width / (layers.length + 1);
-        const nodePositions: { x: number; y: number }[][] = [];
+      // Jump: instantly reposition from opposite side, same char still shown
+      tl.set(inner, { yPercent: -dir * 110 });
 
-        layers.forEach((count, li) => {
-          const nodes = [];
-          const x = layerX * (li + 1);
-          for (let n = 0; n < count; n++) {
-            const y = (canvas.height / (count + 1)) * (n + 1);
-            nodes.push({ x, y });
-          }
-          nodePositions.push(nodes);
-        });
+      // Enter: same letter slides back to center
+      tl.to(inner, {
+        yPercent: 0,
+        duration: speed * 0.42,
+        ease: "power2.out",
+      });
+    }
 
-        // Draw connections
-        for (let l = 0; l < nodePositions.length - 1; l++) {
-          nodePositions[l].forEach((from) => {
-            nodePositions[l + 1].forEach((to) => {
-              const pulse =
-                (Math.sin(t * 2 + from.x * 0.01 + to.y * 0.01) + 1) / 2;
-              ctx.beginPath();
-              ctx.moveTo(from.x, from.y);
-              ctx.lineTo(to.x, to.y);
-              ctx.strokeStyle = `rgba(${accentRgb}, ${pulse * 0.3 + 0.05})`;
-              ctx.lineWidth = 0.8;
-              ctx.stroke();
-            });
-          });
-        }
+    // Start each animated letter independently with a staggered delay
+    animatedIndices.forEach((letterIndex, k) => {
+      const inner = container.querySelector<HTMLSpanElement>(
+        `.slot-inner[data-index="${letterIndex}"]`,
+      );
+      if (!inner) return;
+      const realChar = inner.dataset.char ?? "";
+      const delay = k * 0.5 + Math.random() * 1.0; // 0s to 1.5s stagger
 
-        // Draw nodes
-        nodePositions.forEach((layer, li) => {
-          layer.forEach((node) => {
-            const pulse = (Math.sin(t * 1.5 + li + node.y * 0.02) + 1) / 2;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 4 + pulse * 2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${accentRgb}, ${0.4 + pulse * 0.6})`;
-            ctx.fill();
-          });
-        });
-      } else if (type === "backend") {
-        // Database cylinders
-        for (let i = 0; i < 3; i++) {
-          const x = cx + (i - 1) * 60;
-          const y = cy + Math.sin(t + i) * 8;
-          const w = 44;
-          const h = 18;
-          const bodyH = 36;
+      const dc = gsap.delayedCall(delay, () => runCycle(inner, realChar));
+      delaysRef.current.push(dc);
+    });
 
-          ctx.beginPath();
-          ctx.ellipse(x, y, w, h, 0, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${accentRgb}, 0.12)`;
-          ctx.fill();
-          ctx.strokeStyle = `rgba(${accentRgb}, 0.4)`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.rect(x - w, y, w * 2, bodyH);
-          ctx.fillStyle = `rgba(${accentRgb}, 0.06)`;
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(x - w, y);
-          ctx.lineTo(x - w, y + bodyH);
-          ctx.moveTo(x + w, y);
-          ctx.lineTo(x + w, y + bodyH);
-          ctx.strokeStyle = `rgba(${accentRgb}, 0.25)`;
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.ellipse(x, y + bodyH, w, h, 0, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${accentRgb}, 0.12)`;
-          ctx.fill();
-          ctx.strokeStyle = `rgba(${accentRgb}, 0.4)`;
-          ctx.stroke();
-        }
-      } else if (type === "rpa") {
-        // Gear / automation flow
-        for (let g = 0; g < 3; g++) {
-          const gx = cx + (g - 1) * 70;
-          const gy = cy;
-          const r = 22;
-          const teeth = 8;
-          const dir = g % 2 === 0 ? 1 : -1;
-
-          ctx.save();
-          ctx.translate(gx, gy);
-          ctx.rotate(t * dir * 0.6);
-          ctx.beginPath();
-          for (let i = 0; i < teeth * 2; i++) {
-            const angle = (i / (teeth * 2)) * Math.PI * 2;
-            const rad = i % 2 === 0 ? r + 6 : r;
-            ctx.lineTo(Math.cos(angle) * rad, Math.sin(angle) * rad);
-          }
-          ctx.closePath();
-          ctx.strokeStyle = `rgba(${accentRgb}, 0.5)`;
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.fillStyle = `rgba(${accentRgb}, 0.08)`;
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.arc(0, 0, 7, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${accentRgb}, 0.3)`;
-          ctx.fill();
-          ctx.restore();
-        }
-
-        // Connecting lines between gears
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(cx - 70 + 22, cy);
-        ctx.lineTo(cx - 22, cy);
-        ctx.moveTo(cx + 22, cy);
-        ctx.lineTo(cx + 70 - 22, cy);
-        ctx.strokeStyle = `rgba(${accentRgb}, 0.2)`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.setLineDash([]);
-      } else {
-        // API — request/response arcs
-        for (let i = 0; i < 4; i++) {
-          const progress = (t * 0.4 + i * 0.25) % 1;
-          const startX = cx - 80;
-          const endX = cx + 80;
-          const x = startX + (endX - startX) * progress;
-          const arcY =
-            cy + Math.sin(progress * Math.PI) * (i % 2 === 0 ? -30 : 30);
-
-          ctx.beginPath();
-          ctx.arc(x, arcY, 3, 0, Math.PI * 2);
-          const alpha = Math.sin(progress * Math.PI);
-          ctx.fillStyle = `rgba(${accentRgb}, ${alpha * 0.8})`;
-          ctx.fill();
-        }
-
-        ctx.beginPath();
-        ctx.roundRect(cx - 90, cy - 18, 36, 36, 6);
-        ctx.roundRect(cx + 54, cy - 18, 36, 36, 6);
-        ctx.strokeStyle = `rgba(${accentRgb}, 0.4)`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.font = `${10}px monospace`;
-        ctx.fillStyle = `rgba(${accentRgb}, 0.6)`;
-        ctx.textAlign = "center";
-        ctx.fillText("API", cx - 72, cy + 4);
-        ctx.fillText("DB", cx + 72, cy + 4);
-      }
+    return () => {
+      tlsRef.current.forEach((tl) => tl.kill());
+      delaysRef.current.forEach((dc) => dc.kill());
+      tlsRef.current = [];
+      delaysRef.current = [];
+      container.querySelectorAll<HTMLSpanElement>(".slot-inner").forEach((span) => {
+        span.textContent = span.dataset.char ?? "";
+        gsap.set(span, { yPercent: 0 });
+      });
     };
+  }, [animatedIndices]);
 
-    draw();
-    return () => cancelAnimationFrame(animId);
-  }, [type, accent]);
-
-  return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div ref={containerRef} style={{ display: "inline" }}>
+      {title.split("").map((char, i) => {
+        if (char === " ") {
+          return (
+            <span key={i} style={{ display: "inline" }}>
+              {" "}
+            </span>
+          );
+        }
+        if (!animatedIndices.includes(i)) {
+          return (
+            <span key={i} style={{ display: "inline-block" }}>
+              {char}
+            </span>
+          );
+        }
+        return (
+          <span
+            key={i}
+            style={{
+              display: "inline-block",
+              overflow: "hidden",
+              height: "1.2em",
+              verticalAlign: "bottom",
+            }}
+          >
+            <span
+              className="slot-inner"
+              data-char={char}
+              data-index={String(i)}
+              style={{ display: "block" }}
+            >
+              {char}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
-export default function Projects() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
+// ProjectCard
+interface ProjectCardProps {
+  project: ProjectEntry;
+  anyHovered: boolean;
+  onHoverEnter: () => void;
+  onHoverLeave: () => void;
+  isMobile: boolean;
+  isFirst: boolean;
+  onNavigate: (slug: string) => void;
+}
 
-  const bgOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.85, 1],
-    [0, 1, 1, 0],
+function ProjectCard({
+  project,
+  anyHovered,
+  onHoverEnter,
+  onHoverLeave,
+  isMobile,
+  isFirst,
+  onNavigate,
+}: ProjectCardProps) {
+  const [hovered, setHovered] = useState(false);
+
+  const handleEnter = () => {
+    setHovered(true);
+    onHoverEnter();
+  };
+
+  const handleLeave = () => {
+    setHovered(false);
+    onHoverLeave();
+  };
+
+  return (
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => onNavigate(project.slug)}
+      onKeyDown={(e) => { if (e.key === "Enter") onNavigate(project.slug); }}
+      style={{ textDecoration: "none", flexShrink: 0, cursor: "pointer" }}
+    >
+      <motion.div
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        animate={{
+          scale: hovered ? 1.03 : anyHovered ? 0.97 : 1,
+        }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: "relative",
+          width: isMobile ? "100%" : "clamp(420px, 55vw, 680px)",
+          height: isMobile
+            ? "clamp(200px, 50vw, 300px)"
+            : "clamp(260px, 38vh, 420px)",
+          borderRadius: 16,
+          overflow: "hidden",
+          cursor: "pointer",
+        }}
+      >
+        <div style={{ position: "absolute", inset: 0 }}>
+          <Image
+            src={project.image}
+            fill
+            alt={project.title}
+            sizes="(max-width: 768px) 85vw, 55vw"
+            loading={isFirst ? "eager" : "lazy"}
+            style={{ objectFit: "cover", objectPosition: "center" }}
+          />
+        </div>
+
+        {/* Hover overlay */}
+        <motion.div
+          animate={{ opacity: hovered ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.2)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Number watermark */}
+        <div
+          style={{
+            position: "absolute",
+            top: 18,
+            left: 22,
+            fontFamily: "var(--font-dm-serif)",
+            fontSize: "clamp(52px, 7vw, 88px)",
+            color: "rgba(255,255,255,0.07)",
+            letterSpacing: "-4px",
+            lineHeight: 1,
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {project.number}
+        </div>
+
+        {/* Bottom gradient + content */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: "clamp(20px, 3vw, 32px)",
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)",
+          }}
+        >
+          <h3
+            style={{
+              fontFamily: "var(--font-dm-serif)",
+              fontSize: "clamp(18px, 2.2vw, 28px)",
+              color: "#ffffff",
+              letterSpacing: "-0.5px",
+              marginBottom: "10px",
+              lineHeight: 1.15,
+            }}
+          >
+            <ScrambleTitle title={project.title} />
+          </h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {project.tech.map((tag) => (
+              <TechBadge key={tag} tag={tag} />
+            ))}
+          </div>
+        </div>
+
+        {/* Arrow - fades in from bottom-left on hover */}
+        <motion.div
+          animate={{
+            opacity: hovered ? 1 : 0,
+            x: hovered ? 0 : -12,
+            y: hovered ? 0 : 12,
+          }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: "absolute",
+            bottom: 24,
+            right: 24,
+            color: "var(--accent)",
+            pointerEvents: "none",
+          }}
+        >
+          <ArrowUpRight size={28} />
+        </motion.div>
+      </motion.div>
+    </div>
   );
+}
 
+// Main component
+export default function Projects() {
+  const router = useRouter();
+  const { play } = useStairTransition();
+  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [anyHovered, setAnyHovered] = useState(false);
+
+  // Detect mobile + set up GSAP horizontal scroll (combined to avoid double-run)
   useEffect(() => {
+    const mobile = window.innerWidth < 768 || navigator.maxTouchPoints > 0;
+    startTransition(() => setIsMobile(mobile));
+
+    if (mobile) return;
+
+    const track = trackRef.current;
+    const section = sectionRef.current;
+    if (!track || !section) return;
+
+    const getTravel = () => Math.max(0, track.scrollWidth - window.innerWidth);
+
+    section.style.height = `${getTravel() + window.innerHeight}px`;
+
     const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>(".project-card").forEach((card, i) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 80 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 88%",
-              toggleActions: "play none none reverse",
-            },
+      gsap.to(track, {
+        x: () => -getTravel(),
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: () => `+=${getTravel()}`,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onRefresh: () => {
+            section.style.height = `${getTravel() + window.innerHeight}px`;
           },
-        );
+        },
       });
     }, sectionRef);
+
     return () => ctx.revert();
   }, []);
+
+  const handleHoverEnter = useCallback(() => setAnyHovered(true), []);
+  const handleHoverLeave = useCallback(() => setAnyHovered(false), []);
+
+  const handleNavigate = useCallback(
+    async (slug: string) => {
+      await play();
+      router.push(`/projects/${slug}`);
+    },
+    [play, router],
+  );
 
   return (
     <section
@@ -290,222 +365,86 @@ export default function Projects() {
       className="section-panel"
       style={{
         position: "relative",
-        padding: "clamp(100px, 15vh, 160px) clamp(20px, 5vw, 80px)",
-        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, var(--white) 0%, rgba(255,255,255,0.14) 45%, rgba(255,255,255,0.06) 100%)",
       }}
     >
-      <motion.div
+      {/* Pin zone: CSS sticky keeps this in view while GSAP scrubs the track */}
+      <div
         style={{
-          position: "absolute",
-          inset: 0,
-          background: "var(--black)",
-          opacity: bgOpacity,
-          zIndex: 0,
-          pointerEvents: "none",
+          position: isMobile ? "relative" : "sticky",
+          top: 0,
+          height: isMobile ? "auto" : "100vh",
+          overflow: isMobile ? "visible" : "hidden",
         }}
-      />
-
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <motion.p
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: false }}
-          transition={{ duration: 0.6 }}
-          style={{
-            fontSize: "11px",
-            letterSpacing: "3px",
-            color: "var(--mid)",
-            textTransform: "uppercase",
-            marginBottom: "16px",
-          }}
-        >
-          03 / Projects
-        </motion.p>
-
-        <motion.h2
+      >
+        {/* Section header - stays visible as cards scroll past */}
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            fontFamily: "var(--font-dm-serif)",
-            fontSize: "clamp(32px, 5vw, 60px)",
-            letterSpacing: "-2px",
-            color: "#ffffff",
-            marginBottom: "64px",
+            position: isMobile ? "relative" : "absolute",
+            top: isMobile ? undefined : "clamp(40px, 6vh, 64px)",
+            left: isMobile ? undefined : "clamp(24px, 5vw, 64px)",
+            padding: isMobile
+              ? "clamp(56px, 10vh, 80px) clamp(24px, 5vw, 64px) 32px"
+              : undefined,
+            zIndex: 2,
+            pointerEvents: "none",
           }}
         >
-          Selected work
-        </motion.h2>
+          <p
+            style={{
+              fontSize: "11px",
+              letterSpacing: "3px",
+              textTransform: "uppercase",
+              color: "var(--mid)",
+              marginBottom: "10px",
+            }}
+          >
+            03 / Projects
+          </p>
+          <h2
+            style={{
+              fontFamily: "var(--font-dm-serif)",
+              fontSize: "clamp(32px, 5vw, 64px)",
+              letterSpacing: "-2px",
+              color: "var(--black)",
+              lineHeight: 1,
+            }}
+          >
+            Selected Work
+          </h2>
+        </motion.div>
 
-        {/* Projects grid — alternating layout */}
+        {/* Horizontal card track (vertical on mobile) */}
         <div
+          ref={trackRef}
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: "clamp(24px, 4vh, 40px)",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "center",
+            height: isMobile ? "auto" : "100%",
+            gap: "clamp(20px, 3vw, 32px)",
+            padding: isMobile
+              ? "0 clamp(24px, 5vw, 64px) clamp(60px, 8vh, 80px)"
+              : "0 clamp(24px, 5vw, 64px)",
+            width: isMobile ? "100%" : "max-content",
           }}
         >
-          {projects.map((project, i) => (
-            <div
-              key={project.title}
-              className="project-card"
-              style={{ opacity: 0 }}
-            >
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    i % 2 === 0
-                      ? "clamp(200px, 35%, 360px) 1fr"
-                      : "1fr clamp(200px, 35%, 360px)",
-                  gap: "clamp(20px, 3vw, 40px)",
-                  background: "#0d0d0d",
-                  border: "0.5px solid #1a1a1a",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                  minHeight: "240px",
-                }}
-              >
-                {/* Visual canvas */}
-                <div
-                  style={{
-                    order: i % 2 === 0 ? 0 : 1,
-                    background: "#0a0a0a",
-                    position: "relative",
-                    minHeight: "200px",
-                    borderRight: i % 2 === 0 ? `1px solid #1a1a1a` : "none",
-                    borderLeft: i % 2 !== 0 ? `1px solid #1a1a1a` : "none",
-                  }}
-                >
-                  <div style={{ position: "absolute", inset: 0 }}>
-                    <ProjectVisual
-                      type={project.visual}
-                      accent={project.accent}
-                    />
-                  </div>
-                  {/* Nomor besar overlay */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "12px",
-                      right: "16px",
-                      fontFamily: "var(--font-dm-serif)",
-                      fontSize: "clamp(48px, 6vw, 72px)",
-                      color: `${project.accent}15`,
-                      letterSpacing: "-4px",
-                      lineHeight: 1,
-                      pointerEvents: "none",
-                    }}
-                  >
-                    {project.number}
-                  </div>
-                </div>
-
-                {/* Konten */}
-                <div
-                  style={{
-                    order: i % 2 === 0 ? 1 : 0,
-                    padding: "clamp(24px, 3vw, 36px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      letterSpacing: "2px",
-                      color: project.accent,
-                      textTransform: "uppercase",
-                      marginBottom: "10px",
-                      display: "block",
-                    }}
-                  >
-                    {project.subtitle}
-                  </span>
-
-                  <h3
-                    style={{
-                      fontFamily: "var(--font-dm-serif)",
-                      fontSize: "clamp(20px, 2.5vw, 30px)",
-                      color: "#ffffff",
-                      letterSpacing: "-0.5px",
-                      marginBottom: "14px",
-                    }}
-                  >
-                    {project.title}
-                  </h3>
-
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#666",
-                      lineHeight: 1.75,
-                      marginBottom: "20px",
-                      maxWidth: "480px",
-                    }}
-                  >
-                    {project.description}
-                  </p>
-
-                  {/* Tech tags */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "6px",
-                      marginBottom: "24px",
-                    }}
-                  >
-                    {project.tech.map((tag) => (
-                      <span
-                        key={tag}
-                        style={{
-                          padding: "4px 12px",
-                          background: "#1a1a1a",
-                          borderRadius: "100px",
-                          fontSize: "11px",
-                          color: "#666",
-                          border: "0.5px solid #2a2a2a",
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Link */}
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      color: project.accent,
-                      textDecoration: "none",
-                      fontWeight: 700,
-                      letterSpacing: "0.3px",
-                      transition: "gap 0.2s",
-                      width: "fit-content",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.gap = "14px";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.gap = "8px";
-                    }}
-                  >
-                    View on GitHub →
-                  </a>
-                </div>
-              </motion.div>
-            </div>
+          {projects.map((project, index) => (
+            <ProjectCard
+              key={project.slug}
+              project={project}
+              anyHovered={anyHovered}
+              onHoverEnter={handleHoverEnter}
+              onHoverLeave={handleHoverLeave}
+              isMobile={isMobile}
+              isFirst={index === 0}
+              onNavigate={handleNavigate}
+            />
           ))}
         </div>
       </div>
