@@ -24,7 +24,11 @@ class Spring {
   }
 }
 
-export default function HeroScene() {
+export default function HeroScene({
+  interactive = true,
+}: {
+  interactive?: boolean;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,10 +63,10 @@ export default function HeroScene() {
 
     const material = new THREE.MeshPhysicalMaterial({
       color: "#f8f9fa",
-      metalness: 0.15,
-      roughness: 0.25,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
+      metalness: 0.1,
+      roughness: 0.35,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.15,
       side: THREE.DoubleSide,
     });
 
@@ -70,18 +74,18 @@ export default function HeroScene() {
     mesh.position.y = -3.5;
     scene.add(mesh);
 
-    const ambientLight = new THREE.AmbientLight("#ffffff", 1.2);
+    const ambientLight = new THREE.AmbientLight("#ffffff", 1.4);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight("#ffffff", 2.2);
+    const dirLight = new THREE.DirectionalLight("#ffffff", 2.0);
     dirLight.position.set(5, 15, 8);
     scene.add(dirLight);
 
-    const spotLight = new THREE.PointLight("#cbd5e1", 5, 40);
+    const spotLight = new THREE.PointLight("#cbd5e1", 4, 40);
     spotLight.position.set(-10, 8, -5);
     scene.add(spotLight);
 
-    const mouseLight = new THREE.PointLight("#d4f5a0", 4, 25);
+    const mouseLight = new THREE.PointLight("#d4f5a0", 3, 25);
     mouseLight.position.set(0, 2, 5);
     if (!isMobile) scene.add(mouseLight);
 
@@ -89,7 +93,7 @@ export default function HeroScene() {
     const mouseVec = new THREE.Vector2();
     const springCamX = new Spring(0, 0.04, 0.86);
     const springCamY = new Spring(3.5, 0.04, 0.86);
-    const springCamZ = new Spring(8.0, 0.05, 0.82);
+    const springCamZ = new Spring(8.0, 0.04, 0.86);
     const springLightX = new Spring(0, 0.07, 0.78);
     const springLightZ = new Spring(5, 0.07, 0.78);
 
@@ -99,10 +103,12 @@ export default function HeroScene() {
     let targetRippleIntensity = 0;
     let targetScrollY = 0;
     let currentScrollY = 0;
+
     const onScroll = () => {
       targetScrollY = window.scrollY;
     };
-    window.addEventListener("scroll", onScroll);
+    if (interactive)
+      window.addEventListener("scroll", onScroll, { passive: true });
 
     let targetMouseX = 0;
     let targetMouseY = 0;
@@ -114,21 +120,14 @@ export default function HeroScene() {
       if (!isMobile) {
         mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(mouseVec, camera);
-        const hits = raycaster.intersectObject(mesh);
-        if (hits.length > 0) {
-          mouseWorldX = hits[0].point.x;
-          mouseWorldZ = hits[0].point.z;
-          targetRippleIntensity = 1.0;
-        }
       }
     };
-    window.addEventListener("mousemove", onMouseMove);
+    if (interactive) window.addEventListener("mousemove", onMouseMove);
 
     const onMouseLeave = () => {
       targetRippleIntensity = 0;
     };
-    window.addEventListener("mouseleave", onMouseLeave);
+    if (interactive) window.addEventListener("mouseleave", onMouseLeave);
 
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -142,6 +141,14 @@ export default function HeroScene() {
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
+
+      currentScrollY += (targetScrollY - currentScrollY) * 0.05;
+      const scrollProgress = currentScrollY / window.innerHeight;
+
+      // KUNCI PERGERAKAN KAMERA: Maksimal efek scroll hanya sampai 1.2x tinggi layar
+      // Jadi kameranya berhenti maju dan tidak akan pernah nabrak mesh
+      const cappedProgress = Math.min(scrollProgress, 1.2);
+
       const t = (performance.now() - startTime) * 0.0012;
 
       mouseRippleIntensity +=
@@ -158,7 +165,8 @@ export default function HeroScene() {
         const wave3 = Math.sin((ix - iz) * 0.1 - t * 0.4) * 0.6;
 
         let ripple = 0;
-        if (!isMobile && mouseRippleIntensity > 0.01) {
+        // Ripple hanya muncul kalau kita masih di area atas (scroll < 0.5)
+        if (!isMobile && mouseRippleIntensity > 0.01 && scrollProgress < 0.5) {
           const dx = ix - mouseWorldX;
           const dz = iz - mouseWorldZ;
           const dist2 = dx * dx + dz * dz;
@@ -167,26 +175,46 @@ export default function HeroScene() {
 
         positions.setY(i, wave1 + wave2 + wave3 + ripple);
       }
+
       positions.needsUpdate = true;
       geometry.computeVertexNormals();
+      geometry.computeBoundingSphere();
 
-      currentScrollY += (targetScrollY - currentScrollY) * 0.05;
-      const scrollProgress = currentScrollY / window.innerHeight;
+      // Gunakan cappedProgress agar kamera berhenti gerak setelah lewat hero
       camera.position.x = springCamX.update(targetMouseX);
       camera.position.y = springCamY.update(
-        3.5 + targetMouseY * 0.5 - scrollProgress * 0.8,
+        3.5 + targetMouseY * 0.5 - cappedProgress * 1.5,
       );
-      camera.position.z = springCamZ.update(8.0 - scrollProgress * 4.5);
+      camera.position.z = springCamZ.update(8.0 - cappedProgress * 2.5);
 
+      mesh.rotation.z = cappedProgress * 0.1;
+      camera.lookAt(0, -1, -cappedProgress * 2.0);
+
+      // Raycaster (Interaksi Kursor) hanya hidup saat di area Hero
+      if (!isMobile && scrollProgress < 0.5) {
+        raycaster.setFromCamera(mouseVec, camera);
+        const hits = raycaster.intersectObject(mesh);
+
+        if (hits.length > 0) {
+          mouseWorldX += (hits[0].point.x - mouseWorldX) * 0.15;
+          mouseWorldZ += (hits[0].point.z - mouseWorldZ) * 0.15;
+          targetRippleIntensity = 1.0;
+        } else {
+          targetRippleIntensity = 0.0;
+        }
+      } else {
+        // Matikan efek interaksi begitu turun dari hero
+        targetRippleIntensity = 0.0;
+      }
+
+      // Cahaya hijau (mouse light) akan ikut meredup/hilang interaksinya kalau turun
       if (!isMobile) {
         mouseLight.position.x = springLightX.update(targetMouseX * 10);
         mouseLight.position.y = 3 + targetMouseY * 3;
-        mouseLight.position.z = springLightZ.update(5 - scrollProgress * 3);
-        mouseLight.intensity = 3 + mouseRippleIntensity * 5;
+        mouseLight.position.z = springLightZ.update(5 - cappedProgress * 3);
+        mouseLight.intensity =
+          scrollProgress < 0.5 ? 3 + mouseRippleIntensity * 5 : 0;
       }
-
-      mesh.rotation.z = scrollProgress * 0.2;
-      camera.lookAt(0, -1, -scrollProgress * 4.5);
 
       renderer.render(scene, camera);
     };
@@ -195,9 +223,9 @@ export default function HeroScene() {
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseleave", onMouseLeave);
+      if (interactive) window.removeEventListener("scroll", onScroll);
+      if (interactive) window.removeEventListener("mousemove", onMouseMove);
+      if (interactive) window.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("resize", onResize);
       geometry.dispose();
       material.dispose();
@@ -206,7 +234,7 @@ export default function HeroScene() {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [interactive]);
 
   return (
     <div
