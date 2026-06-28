@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
+import StairTransition from "@/components/StairTransition";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -27,10 +28,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body className={`${syne.variable} ${dmSerif.variable}`}>
         <SmoothScroll />
-        {children}
+        <StairTransition>{children}</StairTransition>
       </body>
     </html>
   );

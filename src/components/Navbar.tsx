@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
+
 const navLinks = [
   { label: "About", href: "#about" },
   { label: "Experience", href: "#experience" },
@@ -10,10 +12,15 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isProjectPage = pathname.startsWith("/projects/");
+  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
+    setMounted(true);
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
 
@@ -37,15 +44,25 @@ export default function Navbar() {
     };
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleLogoClick = () => {
+    if (isProjectPage) {
+      router.push("/");
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
-  const scrollToSection = (href: string) => {
-    const id = href.replace("#", "");
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+  const handleNavLinkClick = (href: string) => {
+    if (isProjectPage) {
+      router.push(`/${href}`);
+    } else {
+      const id = href.replace("#", "");
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
   };
+
+  if (!mounted) return null;
 
   return (
     <motion.nav
@@ -69,7 +86,7 @@ export default function Navbar() {
       }}
     >
       <button
-        onClick={scrollToTop}
+        onClick={handleLogoClick}
         style={{
           fontFamily: "var(--font-dm-serif)",
           fontWeight: 400,
@@ -90,7 +107,7 @@ export default function Navbar() {
         {navLinks.map((link) => (
           <button
             key={link.label}
-            onClick={() => scrollToSection(link.href)}
+            onClick={() => handleNavLinkClick(link.href)}
             style={{
               fontSize: "clamp(11px, 1.2vw, 13px)",
               color:
