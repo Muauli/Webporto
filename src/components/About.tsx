@@ -31,14 +31,17 @@ const mappedLogoRows: LogoItem[][] = techLogoRows.map((row) =>
 const MarqueeRow = ({
   row,
   rowIndex,
+  isMobile,
 }: {
   row: LogoItem[];
   rowIndex: number;
+  isMobile: boolean;
 }) => {
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
   const [isRowPaused, setIsRowPaused] = useState(false);
 
-  const duration = 25 + rowIndex * 5;
+  const baseDuration = 25 + rowIndex * 5;
+  const duration = isMobile ? baseDuration * 2 : baseDuration;
   const ICON_SIZE = 38;
 
   const isEven = rowIndex % 2 === 0;
@@ -146,14 +149,30 @@ const MarqueeRow = ({
 
 export default function About() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
 
-  const titleX1 = useTransform(scrollYProgress, [0, 1], ["-6%", "6%"]);
-  const titleX2 = useTransform(scrollYProgress, [0, 1], ["6%", "-6%"]);
+  const titleX1 = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["-3%", "3%"] : ["-6%", "6%"],
+  );
+  const titleX2 = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["3%", "-3%"] : ["6%", "-6%"],
+  );
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -447,7 +466,7 @@ export default function About() {
         }}
       >
         {mappedLogoRows.map((row, rowIndex) => (
-          <MarqueeRow key={rowIndex} row={row} rowIndex={rowIndex} />
+          <MarqueeRow key={rowIndex} row={row} rowIndex={rowIndex} isMobile={isMobile} />
         ))}
       </div>
       <div

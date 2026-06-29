@@ -11,18 +11,10 @@ export default function PageTransition({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // If the loader has already played in this session, skip the 1500ms delay
-    // so content appears immediately when returning from a project page.
-    const skipDelay =
-      typeof sessionStorage !== "undefined" &&
-      sessionStorage.getItem("lp") === "1";
+    const skipDelay = sessionStorage.getItem("lp") === "1";
+    const delayTime = skipDelay ? 0 : 1500;
+    const t = setTimeout(() => setMounted(true), delayTime);
 
-    if (skipDelay) {
-      setMounted(true);
-      return;
-    }
-
-    const t = setTimeout(() => setMounted(true), 1500);
     return () => clearTimeout(t);
   }, []);
 

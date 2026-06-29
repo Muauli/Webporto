@@ -20,14 +20,11 @@ import { projects, type ProjectEntry } from "@/data/projects";
 
 gsap.registerPlugin(ScrollTrigger);
 
-
-// ScrambleTitle: always-on vertical slot machine on 2-3 letters, loops forever
 function ScrambleTitle({ title }: { title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tlsRef = useRef<gsap.core.Timeline[]>([]);
   const delaysRef = useRef<gsap.core.Tween[]>([]);
 
-  // Pick 2 or 3 non-space letter positions, evenly spaced, deterministic per title
   const animatedIndices = useMemo(() => {
     const letters = title
       .split("")
@@ -43,10 +40,9 @@ function ScrambleTitle({ title }: { title: string }) {
     const container = containerRef.current;
     if (!container) return;
 
-    // Recursive cycle: exit, jump from opposite side with same char, enter, repeat
     function runCycle(inner: HTMLSpanElement, realChar: string) {
       const dir = Math.random() > 0.5 ? 1 : -1;
-      const speed = 1.2 + Math.random() * 1.6; // 1.2s to 2.8s
+      const speed = 1.2 + Math.random() * 1.6;
       const restDuration = 0.8 + Math.random() * 1.4;
 
       const tl = gsap.timeline({
@@ -58,40 +54,33 @@ function ScrambleTitle({ title }: { title: string }) {
       });
       tlsRef.current.push(tl);
 
-      // Rest: real char visible, centered
       tl.set(inner, { yPercent: 0 });
       tl.call(() => {
         inner.textContent = realChar;
       });
       tl.to(inner, { duration: restDuration });
 
-      // Exit: letter moves out in dir direction
       tl.to(inner, {
         yPercent: dir * 110,
         duration: speed * 0.3,
         ease: "power2.in",
       });
 
-      // Jump: instantly reposition from opposite side, same char still shown
       tl.set(inner, { yPercent: -dir * 110 });
 
-      // Enter: same letter slides back to center
       tl.to(inner, {
         yPercent: 0,
         duration: speed * 0.42,
         ease: "power2.out",
       });
     }
-
-    // Start each animated letter independently with a staggered delay
     animatedIndices.forEach((letterIndex, k) => {
       const inner = container.querySelector<HTMLSpanElement>(
         `.slot-inner[data-index="${letterIndex}"]`,
       );
       if (!inner) return;
       const realChar = inner.dataset.char ?? "";
-      const delay = k * 0.5 + Math.random() * 1.0; // 0s to 1.5s stagger
-
+      const delay = k * 0.5 + Math.random() * 1.0;
       const dc = gsap.delayedCall(delay, () => runCycle(inner, realChar));
       delaysRef.current.push(dc);
     });
@@ -101,10 +90,12 @@ function ScrambleTitle({ title }: { title: string }) {
       delaysRef.current.forEach((dc) => dc.kill());
       tlsRef.current = [];
       delaysRef.current = [];
-      container.querySelectorAll<HTMLSpanElement>(".slot-inner").forEach((span) => {
-        span.textContent = span.dataset.char ?? "";
-        gsap.set(span, { yPercent: 0 });
-      });
+      container
+        .querySelectorAll<HTMLSpanElement>(".slot-inner")
+        .forEach((span) => {
+          span.textContent = span.dataset.char ?? "";
+          gsap.set(span, { yPercent: 0 });
+        });
     };
   }, [animatedIndices]);
 
@@ -150,7 +141,6 @@ function ScrambleTitle({ title }: { title: string }) {
   );
 }
 
-// ProjectCard
 interface ProjectCardProps {
   project: ProjectEntry;
   anyHovered: boolean;
@@ -187,7 +177,9 @@ function ProjectCard({
       role="link"
       tabIndex={0}
       onClick={() => onNavigate(project.slug)}
-      onKeyDown={(e) => { if (e.key === "Enter") onNavigate(project.slug); }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onNavigate(project.slug);
+      }}
       style={{ textDecoration: "none", flexShrink: 0, cursor: "pointer" }}
     >
       <motion.div
@@ -219,7 +211,6 @@ function ProjectCard({
           />
         </div>
 
-        {/* Hover overlay */}
         <motion.div
           animate={{ opacity: hovered ? 1 : 0 }}
           transition={{ duration: 0.3 }}
@@ -231,7 +222,6 @@ function ProjectCard({
           }}
         />
 
-        {/* Number watermark */}
         <div
           style={{
             position: "absolute",
@@ -249,7 +239,6 @@ function ProjectCard({
           {project.number}
         </div>
 
-        {/* Bottom gradient + content */}
         <div
           style={{
             position: "absolute",
@@ -280,7 +269,6 @@ function ProjectCard({
           </div>
         </div>
 
-        {/* Arrow - fades in from bottom-left on hover */}
         <motion.div
           animate={{
             opacity: hovered ? 1 : 0,
@@ -303,7 +291,6 @@ function ProjectCard({
   );
 }
 
-// Main component
 export default function Projects() {
   const router = useRouter();
   const { play } = useStairTransition();
@@ -312,7 +299,6 @@ export default function Projects() {
   const [isMobile, setIsMobile] = useState(false);
   const [anyHovered, setAnyHovered] = useState(false);
 
-  // Detect mobile + set up GSAP horizontal scroll (combined to avoid double-run)
   useEffect(() => {
     const mobile = window.innerWidth < 768 || navigator.maxTouchPoints > 0;
     startTransition(() => setIsMobile(mobile));
@@ -369,7 +355,6 @@ export default function Projects() {
           "linear-gradient(180deg, var(--white) 0%, rgba(255,255,255,0.14) 45%, rgba(255,255,255,0.06) 100%)",
       }}
     >
-      {/* Pin zone: CSS sticky keeps this in view while GSAP scrubs the track */}
       <div
         style={{
           position: isMobile ? "relative" : "sticky",
@@ -378,7 +363,6 @@ export default function Projects() {
           overflow: isMobile ? "visible" : "hidden",
         }}
       >
-        {/* Section header - stays visible as cards scroll past */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -418,8 +402,6 @@ export default function Projects() {
             Selected Work
           </h2>
         </motion.div>
-
-        {/* Horizontal card track (vertical on mobile) */}
         <div
           ref={trackRef}
           style={{
