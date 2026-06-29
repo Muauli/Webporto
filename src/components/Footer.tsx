@@ -20,7 +20,6 @@ export default function Footer() {
         zIndex: 1,
       }}
     >
-      {/* Kiri — nama + copyright */}
       <div>
         <p
           style={{
@@ -93,32 +92,35 @@ export default function Footer() {
         ))}
       </div>
 
-      {/* Kanan — back to top */}
       <motion.button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        whileHover={{ y: -3 }}
+        whileHover={{ y: -2 }}
         style={{
           background: "none",
-          border: "0.5px solid #1a1a1a",
-          color: "#333",
+          border: "0.5px solid #2a2a2a",
+          color: "var(--mid)",
           padding: "8px 18px",
           borderRadius: "100px",
           fontSize: "11px",
           cursor: "pointer",
           fontFamily: "var(--font-syne)",
           letterSpacing: "0.5px",
-          transition: "all 0.2s",
+          transition: "border-color 0.2s, color 0.2s",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          minHeight: "44px",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = "var(--accent)";
           e.currentTarget.style.color = "var(--accent)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "#1a1a1a";
-          e.currentTarget.style.color = "#333";
+          e.currentTarget.style.borderColor = "#2a2a2a";
+          e.currentTarget.style.color = "var(--mid)";
         }}
       >
-        Back to top <ArrowUp size={16} />
+        Back to top <ArrowUp size={14} />
       </motion.button>
     </footer>
   );

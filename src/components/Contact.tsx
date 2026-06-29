@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FaGithub, FaLinkedin, FaInstagram } from "react-icons/fa";
 import { TbBrandGmail } from "react-icons/tb";
-import { ArrowRight, ArrowDown } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import emailjs from "@emailjs/browser";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
