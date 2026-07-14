@@ -19,7 +19,7 @@ const experiences = [
     tags: ["Python", "n8n", "Power Automate", "Power BI", "SAP"],
     accent: "#c8f04f",
     description:
-      "Automated 6 SAP FI/CO financial reporting workflows using Python, n8n, and Power Automate. Built an internal web interface for finance personnel to trigger RPA workflows with custom parameters, and developed a RAG chatbot with a curated 40-pair knowledge base for recruitment FAQ automation, with final insights delivered via Power BI dashboards.",
+      "Automated 6 SAP FI/CO financial reporting workflows using Python, n8n, and Power Automate. I built an internal web interface for finance personnel to trigger RPA workflows with custom parameters, and developed a RAG chatbot with a curated 40-pair knowledge base for recruitment FAQs. Additionally, I created a Power BI dashboard to visualize RPA workflow performance metrics and identify bottlenecks.",
     visualColor: "#eef7dc",
     visualPattern: "flow",
   },
