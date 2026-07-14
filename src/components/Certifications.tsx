@@ -46,6 +46,14 @@ const allCerts: CertEntry[] = [
     link: "https://drive.google.com/drive/folders/1CgeF3Rk_gEmJcWSBv6nRfXPOCqKafZtI",
   },
   {
+    title: "TOEFL ITP: English Proficiency",
+    category: "CERTIFICATION",
+    issuer: "Education Testing Service (ETS)",
+    date: "June 30, 2026",
+    image: "/certs/cert-toefl.png",
+    link: "https://drive.google.com/file/d/1EyTQ3Ofee3wRBwQqYK8nRA9Spd7ZAmSh/view?usp=drive_link",
+  },
+  {
     title: "REMIND Competition: 2nd Place Silver Medal",
     category: "ACHIEVEMENT",
     issuer: "Epicentrum, Universitas Padjadjaran",

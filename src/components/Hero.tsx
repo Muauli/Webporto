@@ -179,7 +179,9 @@ export default function Hero() {
             </a>
 
             <a
-              href="/Muhammad_Reza_Aulia-Resume.pdf"
+              href="https://drive.google.com/file/d/1bdlE8kYCYSHCSDYZQzmusZbMRp6UibRK/view?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
               download
               style={{
                 display: "inline-flex",
